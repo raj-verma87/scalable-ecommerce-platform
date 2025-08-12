@@ -66,6 +66,8 @@ export const changeRole = async (req: Request, res: Response) => {
       { headers: { Authorization: authHeader } }
     );
 
+     await userService.changeUserRole(targetAuthId, role);
+     
     return res.json({ message: 'Role updated', authResponse: data });
   } catch (err: any) {
     console.error('Error changing role:', err.response?.data || err.message);

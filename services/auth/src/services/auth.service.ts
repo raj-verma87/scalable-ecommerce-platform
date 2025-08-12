@@ -28,7 +28,7 @@ export const registerUser = async (email: string, password: string)=> {
   // 🔹 Call User Service to create empty profile
   try {
     await axios.post(`${USER_SERVICE_URL}/profile`, 
-      { name: '', address: '', phone: '' }, 
+      { name: '', address: '', phone: '', role: roleToAssign }, 
       {
         headers: {
           Authorization: `Bearer ${generateToken({ id: user._id, role: user.role })}`
@@ -70,7 +70,7 @@ export const createAdminUser = async (email: string, password: string, creatorRo
   // 🔹 Call User Service to create empty profile
   try {
     await axios.post(`${USER_SERVICE_URL}/profile`, 
-      { name: '', address: '', phone: '' }, 
+      { name: '', address: '', phone: '', role: 'ADMIN' }, 
       {
         headers: {
           Authorization: `Bearer ${generateToken({ id: user._id, role: user.role })}`

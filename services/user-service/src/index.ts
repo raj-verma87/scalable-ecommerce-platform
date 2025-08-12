@@ -2,6 +2,7 @@ import express from "express";
 import dotenv from 'dotenv';
 import connectDB from './config/db';
 import userRoutes from './routes/user.routes';
+import { connectRabbitMQ } from './events/consumer';
 
 dotenv.config();
 
@@ -12,7 +13,19 @@ app.use(express.json());
 app.use('/api/users',userRoutes);
 
 connectDB().then(() => {
-  app.listen(PORT, () => {
+  app.listen(PORT, async () => {
     console.log(`User Service running on port ${PORT}`);
+
+    try {
+      await connectRabbitMQ();
+      console.log('✅ RabbitMQ connected');
+    } catch (err) {
+      console.error('Failed to connect RabbitMQ:', err);
+    }
+    
   });
+
+  
 });
+
+  

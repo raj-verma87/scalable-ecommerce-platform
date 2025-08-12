@@ -5,6 +5,7 @@ export interface IUser extends Document {
   name?: string;
   address?: string;
   phone?: string;
+  role: "USER" | "ADMIN"; // store role locally
 }
 
 const userSchema = new Schema<IUser>(
@@ -12,20 +13,21 @@ const userSchema = new Schema<IUser>(
     authUserId: {
       type: String, // stored as string for cross-service compatibility
       required: true,
-      index: true
+      index: true,
     },
     name: {
       type: String,
-      trim: true
+      trim: true,
     },
     address: {
       type: String,
-      trim: true
+      trim: true,
     },
     phone: {
       type: String,
-      trim: true
-    }
+      trim: true,
+    },
+    role: { type: String, enum: ["USER", "ADMIN"], default: "USER" },
   },
   { timestamps: true }
 );

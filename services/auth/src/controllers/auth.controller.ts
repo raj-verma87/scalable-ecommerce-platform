@@ -5,6 +5,8 @@ import { Messages } from "../constants/messages";
 import { registerUser, loginUser, createAdminUser, changeRole } from "../services/auth.service";
 import path from "path";
 import fs from "fs";
+import { publishUserRoleUpdated } from "../events/publisher";
+import nodemailer from 'nodemailer';
 
 export const register = asyncHandler(async (req: Request, res: Response)=> {
     const {email, password} = req.body;
@@ -68,8 +70,13 @@ export const changeUserRole = async (req: Request, res: Response) => {
       return res.status(StatusCodes.NOT_FOUND).json({ message: 'User not found' });
     }
 
-    // Later: Emit USER_ROLE_UPDATED event to sync with user-service
+    // 📢 Publish event after DB update
+    publishUserRoleUpdated(updatedUser.id, updatedUser.role);
 
+    // Send email directly here
+    await sendRoleChangeEmail("rajkumarin87@gmail.com", updatedUser.role);
+
+    
     return res.status(StatusCodes.OK).json({
       message: 'Role updated successfully',
       user: updatedUser
@@ -81,5 +88,28 @@ export const changeUserRole = async (req: Request, res: Response) => {
     });
   }
 };
+
+// Email sender
+const sendRoleChangeEmail = async (email: string, role: string) => {
+  const transporter = nodemailer.createTransport({
+    host: 'smtp.gmail.com', // Change to your SMTP
+    port: 465,
+    auth: {
+      user: 'developer.verma.raj@gmail.com',
+      pass: 'cjqa uqxr yfht cbys'
+    }
+  });
+
+  await transporter.sendMail({
+    from: '"My App" <developer.verma.raj@gmail.com>',
+    to: email,
+    subject: 'Your Role Has Changed',
+    text: `Hello, your account role has been changed to ${role}.`,
+    html: `<p>Hello, your account role has been changed to <strong>${role}</strong>.</p>`
+  });
+
+  console.log(`📧 Email sent to ${email} for role ${role}`);
+};
+
 
 
