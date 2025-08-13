@@ -95,13 +95,13 @@ const sendRoleChangeEmail = async (email: string, role: string) => {
     host: 'smtp.gmail.com', // Change to your SMTP
     port: 465,
     auth: {
-      user: 'developer.verma.raj@gmail.com',
-      pass: 'cjqa uqxr yfht cbys'
+      user: process.env.SMTP_USER,
+      pass: process.env.SMTP_PASS
     }
   });
 
   await transporter.sendMail({
-    from: '"My App" <developer.verma.raj@gmail.com>',
+    from: process.env.SMTP_FROM,
     to: email,
     subject: 'Your Role Has Changed',
     text: `Hello, your account role has been changed to ${role}.`,
