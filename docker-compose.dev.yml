@@ -1,0 +1,71 @@
+# version: "3.9"
+
+services:
+  auth-service:
+    build:
+      context: .
+      dockerfile: ./services/auth-service/Dockerfile
+      target: dev
+    container_name: auth-service-dev
+    ports:
+      - "5001:5001"
+    volumes:
+      - ./services/auth-service:/app/services/auth-service
+      - ./shared:/app/shared
+      - /app/node_modules
+    environment:
+      - NODE_ENV=development
+      - PORT=5001
+      - MONGO_URI=mongodb://mongo:27017/auth
+      - JWT_SECRET=supersecret
+    depends_on:
+      - mongo
+
+  user-service:
+    build:
+      context: .
+      dockerfile: services/user-service/Dockerfile
+      target: dev
+    container_name: user-service-dev
+    ports:
+      - "5002:5002"
+    volumes:
+      - ./services/user-service:/app/services/user-service
+      - ./shared:/app/shared
+      - /app/node_modules
+    environment:
+      - NODE_ENV=development
+      - PORT=5002
+      - MONGO_URI=mongodb://mongo:27017/user
+    depends_on:
+      - mongo
+
+  product-service:
+    build:
+      context: .
+      dockerfile: services/product-service/Dockerfile
+      target: dev
+    container_name: product-service-dev
+    ports:
+      - "5003:5003"
+    volumes:
+      - ./services/product-service:/app/services/product-service
+      - ./shared:/app/shared
+      - /app/node_modules
+    environment:
+      - NODE_ENV=development
+      - PORT=5003
+      - MONGO_URI=mongodb://mongo:27017/product
+    depends_on:
+      - mongo
+
+  mongo:
+    image: mongo:6
+    container_name: mongo-dev
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo-data:/data/db
+
+volumes:
+  mongo-data:

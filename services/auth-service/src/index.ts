@@ -15,6 +15,9 @@ app.use(express.json());
 // Routes
 app.use('/api/auth', authRoutes);
 
+app.get('/health', (req, res) => {
+  res.status(200).json({ status: 'ok', service: 'auth-service' });
+});
 // Error handler
 app.use(errorHandler);
 

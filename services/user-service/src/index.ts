@@ -12,6 +12,10 @@ const PORT = process.env.PORT || 5002;
 app.use(express.json());
 app.use('/api/users',userRoutes);
 
+app.get('/health', (req, res) => {
+  res.status(200).json({ status: 'ok', service: 'user-service' });
+});
+
 connectDB().then(() => {
   app.listen(PORT, async () => {
     console.log(`User Service running on port ${PORT}`);
