@@ -5,16 +5,28 @@ import { Request, Response, NextFunction } from 'express';
 
 let publicKey: string | null = null;
 
-const fetchPublicKey = async () =>{
-    if(!publicKey){
-        const { data } = await axios.get('http://localhost:5001/api/auth/public-key', {
-      responseType: 'text'});
+const fetchPublicKey = async () => {
+  if (!publicKey) {
+    const AUTH_SERVICE_URL = process.env.AUTH_SERVICE_URL || 'http://auth-service:5001';
+    
+    try {
+      const { data } = await axios.get(`${AUTH_SERVICE_URL}/api/auth/public-key`, {
+        responseType: 'text',
+      });
 
-       // Replace escaped newlines (\n) with real ones
-        publicKey = data.replace(/\\n/g, '\n');
-
+      // Replace escaped \n characters with actual newlines
+      publicKey = data.replace(/\\n/g, '\n');
+    } catch (err) {
+      if (err instanceof Error) {
+        console.error('❌ Failed to fetch public key:', err.message);
+      } else {
+        console.error('❌ Failed to fetch public key:', err);
+      }
+      throw err;
     }
-    return publicKey;
+  }
+
+  return publicKey;
 };
 
 export const authenticate = async (req: Request, res: Response, next: NextFunction) => {
@@ -23,7 +35,6 @@ export const authenticate = async (req: Request, res: Response, next: NextFuncti
 
     try{
         const pubKey = await fetchPublicKey();
-         
         if (!pubKey) throw new Error('Public key is not available');
         const decoded = jwt.verify(token, pubKey, {algorithms: ['RS256']});
 

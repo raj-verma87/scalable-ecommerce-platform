@@ -1,0 +1,107 @@
+# version: "3.9"
+
+services:
+  auth-service:
+    build:
+      context: .
+      dockerfile: services/auth-service/Dockerfile
+      target: dev
+    container_name: auth-service-dev
+    ports:
+      - "5001:5001"
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:5001/health"]
+      interval: 15s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+    volumes:
+      - ./services/auth-service:/app/services/auth-service
+      - /app/services/auth-service/node_modules
+      - ./services/auth-service/keys:/app/keys
+    working_dir: /app/services/auth-service
+    environment:
+      - NODE_ENV=development
+      - PORT=5001
+      - MONGO_URI=mongodb://mongo:27017/authdb
+      - JWT_SECRET=supersecret
+      - RABBITMQ_URL=amqp://rabbitmq:5672
+      - JWT_PRIVATE_KEY_PATH=/app/keys/private.key
+      - JWT_PUBLIC_KEY_PATH=/app/keys/public.key
+      - USER_SERVICE_URL=http://user-service:5002/api/users
+
+    depends_on:
+      - mongo
+      - rabbitmq
+
+  user-service:
+    build:
+      context: .
+      dockerfile: services/user-service/Dockerfile
+      target: dev
+    container_name: user-service-dev
+    ports:
+      - "5002:5002"
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:5002/health"]
+      interval: 15s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+    volumes:
+      - ./services/user-service:/app/services/user-service
+      - ./shared:/app/shared
+      - /app/node_modules
+    environment:
+      - NODE_ENV=development
+      - PORT=5002
+      - MONGO_URI=mongodb://mongo:27017/userdb
+      - RABBITMQ_URL=amqp://rabbitmq:5672
+      - AUTH_SERVICE_URL=http://auth-service:5001
+    depends_on:
+      - mongo
+      - rabbitmq
+
+  product-service:
+    build:
+      context: .
+      dockerfile: services/product-service/Dockerfile
+      target: dev
+    container_name: product-service-dev
+    ports:
+      - "5003:5003"
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:5003/health"]
+      interval: 15s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+    volumes:
+      - ./services/product-service:/app/services/product-service
+      - ./shared:/app/shared
+      - /app/node_modules
+    environment:
+      - NODE_ENV=development
+      - PORT=5003
+      - MONGO_URI=mongodb://mongo:27017/productdb
+      - AUTH_SERVICE_URL=http://auth-service:5001
+    depends_on:
+      - mongo
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: rabbitmq-dev
+    ports:
+      - "5672:5672"   # RabbitMQ
+      - "15672:15672" # Management UI
+
+  mongo:
+    image: mongo:6
+    container_name: mongo-dev
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo-data:/data/db
+
+volumes:
+  mongo-data:

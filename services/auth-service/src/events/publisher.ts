@@ -2,10 +2,34 @@ import amqp from 'amqplib';
 
 let channel: amqp.Channel;
 
-export const connectRabbitMQ = async () => {
-  const connection = await amqp.connect('amqp://127.0.0.1');
-  channel = await connection.createChannel();
-  await channel.assertExchange('user_events', 'topic', { durable: true });
+export const connectRabbitMQ = async (retries = 5, delay = 3000) => {
+  const amqpUrl = process.env.RABBITMQ_URL || 'amqp://localhost:5672';
+
+  while (retries > 0) {
+    try {
+      console.log(`🔌 Connecting to RabbitMQ at ${amqpUrl}...`);
+      const connection = await amqp.connect(amqpUrl);
+      channel = await connection.createChannel();
+      await channel.assertExchange('user_events', 'topic', { durable: true });
+      console.log('✅ Connected to RabbitMQ');
+      return;
+    } catch (err) {
+      if (err instanceof Error) {
+        console.error(`❌ RabbitMQ connection failed: ${err.message}`);
+      } else {
+        console.error(`❌ RabbitMQ connection failed: ${String(err)}`);
+      }
+      retries--;
+
+      if (retries === 0) {
+        console.error('🚫 Could not connect to RabbitMQ after multiple attempts.');
+        throw err;
+      }
+
+      console.log(`🔁 Retrying in ${delay / 1000}s... (${retries} retries left)`);
+      await new Promise(res => setTimeout(res, delay));
+    }
+  }
 };
 
 export const publishUserRoleUpdated = (userId: string, role: string) => {

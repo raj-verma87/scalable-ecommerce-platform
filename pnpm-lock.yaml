@@ -58,7 +58,7 @@ importers:
         specifier: ^24.2.0
         version: 24.3.0
       '@types/nodemailer':
-        specifier: ^6.4.17
+        specifier: ^6.4.18
         version: 6.4.18
       nodemon:
         specifier: ^3.1.10

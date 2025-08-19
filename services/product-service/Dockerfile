@@ -15,14 +15,16 @@ FROM base AS deps
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 COPY services/*/package.json services/*/
 
+
+# Allow installing deps even if lockfile is outdated
 RUN --mount=type=cache,id=pnpm-store,target=/root/.pnpm-store \
-    pnpm install -r --frozen-lockfile
+    pnpm install -r --no-frozen-lockfile
 
 ############################################
 # Stage 2: builder
 ############################################
 FROM base AS builder
-ARG SERVICE_DIR=services/auth-service
+ARG SERVICE_DIR=services/product-service
 COPY --from=deps /app/node_modules ./node_modules
 COPY --from=deps /app/package.json ./package.json
 COPY --from=deps /app/pnpm-lock.yaml ./pnpm-lock.yaml
@@ -44,8 +46,8 @@ RUN --mount=type=cache,id=pnpm-store,target=/root/.pnpm-store \
 FROM node:20-alpine  AS runner
 WORKDIR /app
 ENV NODE_ENV=production
-ARG SERVICE_DIR=services/auth-service
-ARG SERVICE_PORT=4001
+ARG SERVICE_DIR=services/product-service
+ARG SERVICE_PORT=5003
 RUN apk upgrade --no-cache
 
 COPY --from=builder /app/${SERVICE_DIR}/dist ./dist
@@ -61,6 +63,6 @@ CMD ["node", "dist/index.js"]
 # Stage 4: dev (simple ts-node-dev)
 ############################################
 FROM deps AS dev
-WORKDIR /app/services/auth-service
-COPY services/auth-service ./
+WORKDIR /app/services/product-service
+COPY services/product-service ./
 CMD ["pnpm", "dev"]

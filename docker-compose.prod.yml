@@ -46,6 +46,15 @@ services:
       - MONGO_URI=mongodb://mongo:27017/product
     depends_on:
       - mongo
+    
+   
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: rabbitmq
+    ports:
+      - "5672:5672"   # RabbitMQ
+      - "15672:15672" # Management UI
+
 
   mongo:
     image: mongo:6

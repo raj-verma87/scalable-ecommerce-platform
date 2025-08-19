@@ -27,7 +27,7 @@ export const createProfile = async (req: Request, res: Response) => {
 export const getMyProfile = async (req: Request, res: Response) => {
     const userId = req.user?.id;
     if (!userId) return res.status(401).json({ message: 'Unauthorized' });
-    
+    console.log("getMyProfile userId...",userId);
     const user = await userService.getUserByAuthId(userId);
     if (!user) return res.status(404).json({ message: 'User not found' });
     res.json(user);
