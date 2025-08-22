@@ -8,18 +8,31 @@ const AUTH_SERVICE_URL = process.env.AUTH_SERVICE_URL || 'http://localhost:5001'
 export const createProfile = async (req: Request, res: Response) => {
   try {
     const userId = req.user?.id;
-    const { name = '', address = '', phone = '' } = req.body;
+    const { name = '', address = '', phone = '', role= '' } = req.body;
 
     const existingProfile = await User.findOne({ authUserId: userId });
     if (existingProfile) {
       return res.status(400).json({ message: 'Profile already exists' });
     }
 
-    const profile = await User.create({ authUserId: userId, name, address, phone });
+    const profile = await User.create({ authUserId: userId, name, address, phone, role });
 
     res.status(201).json({ message: 'Profile created successfully', profile });
   } catch (error) {
     console.error(error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+export const getAllUsers = async (req: Request, res: Response) => {
+  try {
+    const users = await userService.getAllUsers();
+    if (!users) {
+      return res.status(404).json({ message: 'No users found' });
+    }
+    res.json(users);
+  } catch (error) {
+    console.error('Error fetching users:', error);
     res.status(500).json({ message: 'Server error' });
   }
 };

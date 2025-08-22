@@ -1,5 +1,10 @@
 import User, { IUser } from '../models/user.model';
 
+// Get all users
+export const getAllUsers = async (): Promise<IUser[] | null> => {
+  return await User.find().select('-__v') || null;
+};
+
 // Get profile by Auth Service user ID
 export const getUserByAuthId = async (authUserId: string): Promise<IUser | null> => {
   return await User.findOne({ authUserId }).select('-__v');

@@ -24,7 +24,7 @@ export const registerUser = async (email: string, password: string)=> {
     const userCount = await User.countDocuments();
     const roleToAssign = userCount === 0 ? 'ADMIN' : 'USER';
     const user: IUser = await User.create({email, password:hashPassword, role: roleToAssign});
-
+    console.log("userCount...",userCount, "roleToAssign...", roleToAssign);
   // 🔹 Call User Service to create empty profile
   try {
     await axios.post(`${USER_SERVICE_URL}/profile`, 

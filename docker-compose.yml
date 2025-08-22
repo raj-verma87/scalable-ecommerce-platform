@@ -88,6 +88,27 @@ services:
     depends_on:
       - mongo
 
+  gateway-service:
+    build:
+      context: .
+      dockerfile: services/gateway-service/Dockerfile
+    container_name: gateway-service-dev
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./services/gateway-service:/app/services/gateway-service
+      - /app/node_modules
+    environment:
+      - NODE_ENV=development
+      - SERVICE_PORT=8080
+      - AUTH_SERVICE_URL=http://auth-service:5001
+      - USER_SERVICE_URL=http://user-service:5002
+      - PRODUCT_SERVICE_URL=http://product-service:5003
+    depends_on:
+      - auth-service
+      - user-service
+      - product-service
+
   rabbitmq:
     image: rabbitmq:3-management
     container_name: rabbitmq-dev

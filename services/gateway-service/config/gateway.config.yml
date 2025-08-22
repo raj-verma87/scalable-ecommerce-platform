@@ -1,0 +1,140 @@
+http:
+  port: 8080
+
+admin:
+  port: 9876
+  host: localhost
+
+apiEndpoints:
+  auth:
+    host: localhost
+    paths:
+      - /auth/*
+  users:
+    host: localhost
+    paths:
+      - /users/*
+  product:
+    host: localhost
+    paths:
+      - /product/*
+
+  # ✅ Health Endpoints
+  health-auth:
+    host: localhost
+    paths:
+      - /health/auth
+  health-users:
+    host: localhost
+    paths:
+      - /health/users
+  health-product:
+    host: localhost
+    paths:
+      - /health/product
+
+serviceEndpoints:
+  auth-service:
+    url: 'http://localhost:5001/api'
+  user-service:
+    url: 'http://localhost:5002/api'
+  product-service:
+    url: 'http://localhost:5003/api'
+
+  # ✅ Health Service Endpoints
+  auth-health:
+    url: 'http://localhost:5001/health'
+  users-health:
+    url: 'http://localhost:5002/health'
+  product-health:
+    url: 'http://localhost:5003/health'
+
+policies:
+  - basic-auth
+  - cors
+  - expression
+  - key-auth
+  - log
+  - oauth2
+  - proxy
+  - rate-limit
+
+pipelines:
+  auth-pipeline:
+    apiEndpoints:
+      - auth
+    policies:
+      - proxy:
+          - action:
+              serviceEndpoint: auth-service
+              changeOrigin: true
+              stripPath: false
+      - cors:
+          - action:
+              origin: "*"
+      - log:
+          - action:
+              message: 'Auth request received'
+
+  user-pipeline:
+    apiEndpoints:
+      - users
+    policies:
+      - proxy:
+          - action:
+              serviceEndpoint: user-service
+              changeOrigin: true
+              stripPath: false
+      - cors:
+          - action:
+              origin: "*"
+      - log:
+          - action:
+              message: 'User request received'
+
+  product-pipeline:
+    apiEndpoints:
+      - product
+    policies:
+      - proxy:
+          - action:
+              serviceEndpoint: product-service
+              changeOrigin: true
+              stripPath: false
+      - cors:
+          - action:
+              origin: "*"
+      - log:
+          - action:
+              message: 'Product request received'
+
+  # ✅ Health Pipelines
+  health-auth-pipeline:
+    apiEndpoints:
+      - health-auth
+    policies:
+      - proxy:
+          - action:
+              serviceEndpoint: auth-health
+              changeOrigin: true
+              stripPath: true
+
+  health-users-pipeline:
+    apiEndpoints:
+      - health-users
+    policies:
+      - proxy:
+          - action:
+              serviceEndpoint: users-health
+              changeOrigin: true
+              stripPath: true
+
+  health-product-pipeline:
+    apiEndpoints:
+      - health-product
+    policies:
+      - proxy:
+          - action:
+              serviceEndpoint: product-health
+              changeOrigin: true
+              stripPath: true

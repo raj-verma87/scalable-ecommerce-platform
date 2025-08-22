@@ -1,0 +1,25 @@
+{
+  "name": "gateway-service",
+  "description": "Express Gateway Instance Bootstraped from Command Line",
+  "repository": {},
+  "license": "UNLICENSED",
+  "version": "1.0.0",
+  "main": "dist/server.js",
+  "scripts": {
+    "dev": "nodemon --watch src --ext ts --exec ts-node ./src/server.ts",
+    "build": "tsc",
+    "start": "node dist/server.js"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.3",
+    "@types/node": "^24.3.0",
+    "nodemon": "^3.1.10",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.9.2"
+  },
+  "dependencies": {
+    "express": "^5.1.0",
+    "express-gateway": "^1.16.11"
+  },
+ "packageManager": "pnpm@10.15.0"
+}

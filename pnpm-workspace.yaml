@@ -4,3 +4,5 @@ packages:
 
 onlyBuiltDependencies:
   - bcrypt
+  - ejs
+  - es5-ext
