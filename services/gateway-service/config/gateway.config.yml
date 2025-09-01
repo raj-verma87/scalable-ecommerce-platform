@@ -1,3 +1,7 @@
+systemConfig:
+  logger:
+    level: debug
+
 http:
   port: 8080
 
@@ -18,6 +22,10 @@ apiEndpoints:
     host: localhost
     paths:
       - /product/*
+  orders:
+    host: localhost
+    paths:
+      - /orders/*
 
   # ✅ Health Endpoints
   health-auth:
@@ -32,22 +40,30 @@ apiEndpoints:
     host: localhost
     paths:
       - /health/product
+  health-orders:
+    host: localhost
+    paths:
+      - /health/orders
 
 serviceEndpoints:
   auth-service:
-    url: 'http://localhost:5001/api'
+    url: ${AUTH_SERVICE_URL}
   user-service:
-    url: 'http://localhost:5002/api'
+    url: ${USER_SERVICE_URL}
   product-service:
-    url: 'http://localhost:5003/api'
+    url: ${PRODUCT_SERVICE_URL}
+  order-service:
+    url: ${ORDER_SERVICE_URL}
 
   # ✅ Health Service Endpoints
   auth-health:
-    url: 'http://localhost:5001/health'
+    url: ${AUTH_HEALTH_URL}
   users-health:
-    url: 'http://localhost:5002/health'
+    url: ${USERS_HEALTH_URL}
   product-health:
-    url: 'http://localhost:5003/health'
+    url: ${PRODUCT_HEALTH_URL}
+  orders-health:
+    url: ${ORDERS_HEALTH_URL}
 
 policies:
   - basic-auth
@@ -58,6 +74,7 @@ policies:
   - oauth2
   - proxy
   - rate-limit
+  - jwt
 
 pipelines:
   auth-pipeline:
@@ -80,6 +97,16 @@ pipelines:
     apiEndpoints:
       - users
     policies:
+      - log:
+          - action:
+              message: "Incoming order request:"
+      - jwt:
+          - action:
+              secretOrPublicKeyFile: ./keys/public.key
+              algorithms:
+                - RS256
+              audience: my-api
+              issuer: my-company
       - proxy:
           - action:
               serviceEndpoint: user-service
@@ -88,17 +115,51 @@ pipelines:
       - cors:
           - action:
               origin: "*"
-      - log:
-          - action:
-              message: 'User request received'
 
   product-pipeline:
     apiEndpoints:
       - product
     policies:
+      - jwt:
+          - action:
+              secretOrPublicKeyFile: ./keys/public.key
+              algorithms:
+                - RS256
+              audience: my-api
+              issuer: my-company
       - proxy:
           - action:
               serviceEndpoint: product-service
+              changeOrigin: true
+              stripPath: true
+      - cors:
+          - action:
+              origin: "*"
+      - log:
+          - action:
+              message: 'Product request received'
+
+  order-pipeline:
+    apiEndpoints:
+      - orders
+    policies:
+      - log:
+          - action:
+              message: "Incoming order request: ${req.method} ${req.originalUrl}"
+      - jwt:
+          - action:
+              secretOrPublicKeyFile: ./keys/public.key
+              algorithms:
+                - RS256
+              audience: my-api
+              issuer: my-company
+      - rate-limit:
+          - action:
+              max: 100
+              windowMs: 60000   # 100 requests per minute per user
+      - proxy:
+          - action:
+              serviceEndpoint: order-service
               changeOrigin: true
               stripPath: false
       - cors:
@@ -106,7 +167,7 @@ pipelines:
               origin: "*"
       - log:
           - action:
-              message: 'Product request received'
+              message: 'Order request received'
 
   # ✅ Health Pipelines
   health-auth-pipeline:
@@ -136,5 +197,15 @@ pipelines:
       - proxy:
           - action:
               serviceEndpoint: product-health
+              changeOrigin: true
+              stripPath: true
+
+  health-orders-pipeline:
+    apiEndpoints:
+      - health-orders
+    policies:
+      - proxy:
+          - action:
+              serviceEndpoint: orders-health
               changeOrigin: true
               stripPath: true
