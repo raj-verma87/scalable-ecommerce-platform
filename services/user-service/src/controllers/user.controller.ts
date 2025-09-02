@@ -7,8 +7,9 @@ const AUTH_SERVICE_URL = process.env.AUTH_SERVICE_URL || 'http://localhost:5001'
 
 export const createProfile = async (req: Request, res: Response) => {
   try {
-    const userId = req.user?.id;
-    const { name = '', address = '', phone = '', role= '' } = req.body;
+    const userId = (req.user as any)?.id || (req.headers['x-user-id'] as string) || (req.body.authUserId as string);
+    const roleHeader = (req.user as any)?.role || (req.headers['x-user-role'] as string);
+    const { name = '', address = '', phone = '', role = roleHeader || 'USER' } = req.body;
 
     const existingProfile = await User.findOne({ authUserId: userId });
     if (existingProfile) {
@@ -38,7 +39,7 @@ export const getAllUsers = async (req: Request, res: Response) => {
 };
 
 export const getMyProfile = async (req: Request, res: Response) => {
-    const userId = req.user?.id;
+    const userId = (req.user as any)?.id || (req.headers['x-user-id'] as string);
     if (!userId) return res.status(401).json({ message: 'Unauthorized' });
     console.log("getMyProfile userId...",userId);
     const user = await userService.getUserByAuthId(userId);
@@ -47,7 +48,7 @@ export const getMyProfile = async (req: Request, res: Response) => {
 };
 
 export const updateMyProfile = async (req: Request, res: Response) => {
-     const userId = req.user?.id;
+     const userId = (req.user as any)?.id || (req.headers['x-user-id'] as string);
     if (!userId) {
         return res.status(401).json({ message: 'Unauthorized' });
     }

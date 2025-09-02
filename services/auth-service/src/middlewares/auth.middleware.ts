@@ -52,3 +52,15 @@ export const authorize = (...roles: string[]) => (req: AuthRequest, res: Respons
     }
     next();
 };
+
+// Use when authentication is handled by the Gateway.
+export const gatewayAuthorize = (...roles: string[]) => (req: AuthRequest, res: Response, next: NextFunction) => {
+    const role = req.user?.role || (req.headers['x-user-role'] as string);
+    if (!role || !roles.includes(role)) {
+        return res.status(StatusCodes.FORBIDDEN).json({
+            success: false,
+            message: "Forbidden: You do not have access to this resource",
+        });
+    }
+    next();
+};

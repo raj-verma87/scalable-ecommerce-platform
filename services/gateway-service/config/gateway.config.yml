@@ -10,10 +10,19 @@ admin:
   host: localhost
 
 apiEndpoints:
-  auth:
+  auth-public:
     host: localhost
     paths:
-      - /auth/*
+      - /auth/login
+      - /auth/register
+      - /auth/public-key
+  auth-protected:
+    host: localhost
+    paths:
+      - /auth/me
+      - /auth/logout
+      - /auth/users/:id/role
+      - /auth/create-admin
   users:
     host: localhost
     paths:
@@ -50,7 +59,7 @@ serviceEndpoints:
   auth-service:
     url: ${AUTH_SERVICE_URL}/api
   user-service:
-    url: ${USER_SERVICE_URL}
+    url: ${USER_SERVICE_URL}/api
   product-service:
     url: ${PRODUCT_SERVICE_URL}
   order-service:
@@ -78,9 +87,9 @@ policies:
   - rate-limit
 
 pipelines:
-  auth-pipeline:
+  auth-public-pipeline:
     apiEndpoints:
-      - auth
+      - auth-public
     policies:
       - proxy:
           - action:
@@ -92,7 +101,24 @@ pipelines:
               origin: "*"
       - log:
           - action:
-              message: 'Auth request received'
+              message: 'Auth public request received'
+
+  auth-protected-pipeline:
+    apiEndpoints:
+      - auth-protected
+    policies:
+      - jwt-auth: {}
+      - proxy:
+          - action:
+              serviceEndpoint: auth-service
+              changeOrigin: true
+              stripPath: false
+      - cors:
+          - action:
+              origin: "*"
+      - log:
+          - action:
+              message: 'Auth protected request received'
 
   user-pipeline:
     apiEndpoints:

@@ -4,11 +4,11 @@ import { getMyProfile, updateMyProfile, changeRole, createProfile, getAllUsers }
 
 const router = Router();
 
-router.get('/all', authenticate, getAllUsers);
-router.get('/me', authenticate, getMyProfile);
-router.patch('/me', authenticate, updateMyProfile);
-router.patch('/change-role/:id', authenticate, changeRole);
-router.post('/profile', authenticate, createProfile);
+router.get('/all', getAllUsers);
+router.get('/me', getMyProfile);
+router.patch('/me', updateMyProfile);
+router.patch('/change-role/:id', changeRole);
+router.post('/profile', createProfile);
 
 export default router;
 

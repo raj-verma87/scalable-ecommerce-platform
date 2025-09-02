@@ -7,10 +7,18 @@ import { Messages } from '../constants/messages';
 import mongoose from 'mongoose';
 import axios from 'axios';
 
-// Environment variable for internal user-service URL
+// Environment variables for internal user-service URLs
 const USER_SERVICE_URL = process.env.USER_SERVICE_URL || 'http://localhost:5002/api/users';
+const USER_SERVICE_HEALTH_URL = process.env.USER_SERVICE_HEALTH_URL || 'http://localhost:5002/health';
 
 export const registerUser = async (email: string, password: string)=> {
+    // Fast-fail if user-service appears down
+    try {
+      await axios.get(USER_SERVICE_HEALTH_URL, { timeout: 2000 });
+    } catch (err: any) {
+      throw { statusCode: 503, message: 'User Service unavailable. Please try again later.' };
+    }
+
     const existingUser = await User.findOne({email});
     console.log(existingUser);
     if(existingUser){
@@ -24,20 +32,23 @@ export const registerUser = async (email: string, password: string)=> {
     const userCount = await User.countDocuments();
     const roleToAssign = userCount === 0 ? 'ADMIN' : 'USER';
     const user: IUser = await User.create({email, password:hashPassword, role: roleToAssign});
-    console.log("userCount...",userCount, "roleToAssign...", roleToAssign);
-  // 🔹 Call User Service to create empty profile
+  // 🔹 Call User Service to create empty profile; fail and rollback if it doesn't work
   try {
-    await axios.post(`${USER_SERVICE_URL}/profile`, 
-      { name: '', address: '', phone: '', role: roleToAssign }, 
+    await axios.post(`${USER_SERVICE_URL}/profile`,
+      { authUserId: user._id, name: '', address: '', phone: '', role: roleToAssign },
       {
         headers: {
           Authorization: `Bearer ${generateToken({ id: user._id, role: user.role })}`
-        }
+        },
+        timeout: 5000
       }
     );
     console.log('Empty profile created in User Service');
-  } catch (err) {
-    console.error('Failed to create profile in User Service:', err);
+  } catch (err: any) {
+    console.error('Failed to create profile in User Service:', err?.response?.data || err?.message || err);
+    // rollback created auth user to keep data consistent
+    try { await User.deleteOne({ _id: user._id }); } catch (_) {}
+    throw { statusCode: 503, message: 'User Service unavailable. Registration aborted.' };
   }
 
     const userIdAsString = (user._id as mongoose.Types.ObjectId).toString();
@@ -50,6 +61,13 @@ export const registerUser = async (email: string, password: string)=> {
 };
 
 export const createAdminUser = async (email: string, password: string, creatorRole: string) => {
+  // Fast-fail if user-service appears down
+  try {
+    await axios.get(USER_SERVICE_HEALTH_URL, { timeout: 2000 });
+  } catch (err: any) {
+    throw { statusCode: 503, message: 'User Service unavailable. Please try again later.' };
+  }
+
   if (creatorRole !== 'ADMIN') {
     throw { statusCode: StatusCodes.FORBIDDEN, message: 'Only admins can create new admins' };
   }
@@ -67,19 +85,23 @@ export const createAdminUser = async (email: string, password: string, creatorRo
     role: 'ADMIN'
   });
 
-  // 🔹 Call User Service to create empty profile
+  // 🔹 Call User Service to create empty profile; fail and rollback if it doesn't work
   try {
-    await axios.post(`${USER_SERVICE_URL}/profile`, 
-      { name: '', address: '', phone: '', role: 'ADMIN' }, 
+    await axios.post(`${USER_SERVICE_URL}/profile`,
+      { authUserId: user._id, name: '', address: '', phone: '', role: 'ADMIN' },
       {
         headers: {
           Authorization: `Bearer ${generateToken({ id: user._id, role: user.role })}`
-        }
+        },
+        timeout: 5000
       }
     );
     console.log('Empty profile created in User Service');
-  } catch (err) {
-    console.error('Failed to create profile in User Service:', err);
+  } catch (err: any) {
+    console.error('Failed to create profile in User Service:', err?.response?.data || err?.message || err);
+    // rollback created auth user to keep data consistent
+    try { await User.deleteOne({ _id: user._id }); } catch (_) {}
+    throw { statusCode: 503, message: 'User Service unavailable. Admin creation aborted.' };
   }
 
   const userIdAsString = (user._id as mongoose.Types.ObjectId).toString();
