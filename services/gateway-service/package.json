@@ -7,7 +7,7 @@
   "main": "dist/server.js",
   "scripts": {
     "dev": "nodemon --watch src --ext ts --exec ts-node ./src/server.ts",
-    "build": "tsc",
+    "build": "tsc -p tsconfig.json && mkdir -p dist/plugin && cp src/plugin/package.json dist/plugin/package.json",
     "start": "node dist/server.js"
   },
   "devDependencies": {
@@ -24,6 +24,7 @@
     "express": "^5.1.0",
     "express-gateway": "^1.16.11",
     "express-jwt": "^8.5.1",
+    "jsonwebtoken": "^9.0.2",
     "jwks-rsa": "^3.2.0"
   },
   "packageManager": "pnpm@10.15.0"

@@ -26,6 +26,7 @@ apiEndpoints:
     host: localhost
     paths:
       - /orders/*
+      - /orders
 
   # ✅ Health Endpoints
   health-auth:
@@ -47,7 +48,7 @@ apiEndpoints:
 
 serviceEndpoints:
   auth-service:
-    url: ${AUTH_SERVICE_URL}
+    url: ${AUTH_SERVICE_URL}/api
   user-service:
     url: ${USER_SERVICE_URL}
   product-service:
@@ -66,6 +67,7 @@ serviceEndpoints:
     url: ${ORDERS_HEALTH_URL}
 
 policies:
+  - jwt-auth   # 👈 your custom policy
   - basic-auth
   - cors
   - expression
@@ -74,7 +76,6 @@ policies:
   - oauth2
   - proxy
   - rate-limit
-  - jwt
 
 pipelines:
   auth-pipeline:
@@ -99,14 +100,8 @@ pipelines:
     policies:
       - log:
           - action:
-              message: "Incoming order request:"
-      - jwt:
-          - action:
-              secretOrPublicKeyFile: ./keys/public.key
-              algorithms:
-                - RS256
-              audience: my-api
-              issuer: my-company
+              message: "Incoming user request:"
+      - jwt-auth: {}
       - proxy:
           - action:
               serviceEndpoint: user-service
@@ -120,13 +115,7 @@ pipelines:
     apiEndpoints:
       - product
     policies:
-      - jwt:
-          - action:
-              secretOrPublicKeyFile: ./keys/public.key
-              algorithms:
-                - RS256
-              audience: my-api
-              issuer: my-company
+      - jwt-auth: {}
       - proxy:
           - action:
               serviceEndpoint: product-service
@@ -146,13 +135,7 @@ pipelines:
       - log:
           - action:
               message: "Incoming order request: ${req.method} ${req.originalUrl}"
-      - jwt:
-          - action:
-              secretOrPublicKeyFile: ./keys/public.key
-              algorithms:
-                - RS256
-              audience: my-api
-              issuer: my-company
+      - jwt-auth: {}
       - rate-limit:
           - action:
               max: 100

@@ -4,9 +4,9 @@ db:
     emulate: true
     namespace: EG
 
-plugins: {}
-    
-
+plugins:
+  jwt-auth-local:
+    package: /Users/rajkumarverma/Raj/Work_Interview/scalable-ecommerce-platform/services/gateway-service/dist/plugin
 
 crypto:
   cipherKey: sensitiveKey
