@@ -59,7 +59,7 @@ serviceEndpoints:
   auth-service:
     url: ${AUTH_SERVICE_URL}/api
   user-service:
-    url: ${USER_SERVICE_URL}/api
+    url: ${USER_SERVICE_URL}
   product-service:
     url: ${PRODUCT_SERVICE_URL}
   order-service:

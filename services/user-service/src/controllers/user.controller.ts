@@ -62,8 +62,12 @@ export const updateMyProfile = async (req: Request, res: Response) => {
 };
 
 export const changeRole = async (req: Request, res: Response) => {
+  console.log('Headers:', req.headers);
+  console.log('User:', req.user);
+  const userRole = (req.user as any)?.role || (req.headers['x-user-role'] as string);
+  console.log('UserRole:', userRole);
   
-  if (req.user?.role !== 'ADMIN') {
+  if (userRole !== 'ADMIN') {
     return res.status(403).json({ message: 'Access denied' });
   }
 
@@ -77,7 +81,12 @@ export const changeRole = async (req: Request, res: Response) => {
     const { data } = await axios.patch(
       `${AUTH_SERVICE_URL}/api/auth/users/${targetAuthId}/role`,
       { role },
-      { headers: { Authorization: authHeader } }
+      { 
+        headers: { 
+          Authorization: authHeader,
+          'x-user-role': userRole
+        } 
+      }
     );
 
      await userService.changeUserRole(targetAuthId, role);
