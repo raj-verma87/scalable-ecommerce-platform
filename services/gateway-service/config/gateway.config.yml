@@ -30,7 +30,8 @@ apiEndpoints:
   product:
     host: localhost
     paths:
-      - /product/*
+      - /products/*
+      - /products
   orders:
     host: localhost
     paths:
@@ -61,7 +62,7 @@ serviceEndpoints:
   user-service:
     url: ${USER_SERVICE_URL}
   product-service:
-    url: ${PRODUCT_SERVICE_URL}
+    url: ${PRODUCT_SERVICE_URL}/products
   order-service:
     url: ${ORDER_SERVICE_URL}
 

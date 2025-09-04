@@ -1,52 +1,44 @@
+import { Request, Response, NextFunction } from 'express';
 import axios from 'axios';
 import jwt, { JwtPayload } from 'jsonwebtoken';
-import { Request, Response, NextFunction } from 'express';
 
-let publicKey: string | null = null;
-
-const fetchPublicKey = async () => {
-  if (!publicKey) {
-    const AUTH_SERVICE_URL = process.env.AUTH_SERVICE_URL || 'http://auth-service:5001';
-    
-    try {
-      const { data } = await axios.get(`${AUTH_SERVICE_URL}/api/auth/public-key`, {
-        responseType: 'text',
-      });
-
-      // Replace escaped \n characters with actual newlines
-      publicKey = data.replace(/\\n/g, '\n');
-    } catch (err) {
-      if (err instanceof Error) {
-        console.error('❌ Failed to fetch public key:', err.message);
-      } else {
-        console.error('❌ Failed to fetch public key:', err);
-      }
-      throw err;
-    }
-  }
-
-  return publicKey;
+// Authentication is performed at the Gateway. This middleware trusts
+// headers injected by the Gateway's jwt-auth policy and populates req.user.
+// Fetch and cache public key for local JWT verification fallback
+let cachedPublicKey: string | null = null;
+const getPublicKey = async (): Promise<string> => {
+  if (cachedPublicKey) return cachedPublicKey;
+  const AUTH_SERVICE_URL = process.env.AUTH_SERVICE_URL || 'http://localhost:5001';
+  const { data } = await axios.get(`${AUTH_SERVICE_URL}/api/auth/public-key`, { responseType: 'text', timeout: 3000 });
+  cachedPublicKey = (data as string).replace(/\\n/g, '\n');
+  return cachedPublicKey;
 };
 
-export const authenticate = async (req: Request, res: Response, next: NextFunction) => {
-  const token = req.headers.authorization?.split(' ')[1];
-  if (!token) return res.status(401).json({ message: 'No token provided' });
+export const gatewayOrLocalAuthenticate = async (req: Request, res: Response, next: NextFunction) => {
+  const userId = req.headers['x-user-id'] as string | undefined;
+  const userRole = req.headers['x-user-role'] as string | undefined;
 
+  // Fast path: trust gateway headers if present
+  if (userId) {
+    (req as any).user = { id: userId, role: userRole };
+    return next();
+  }
+
+  // Fallback: verify Authorization bearer token locally
+  const authHeader = req.headers.authorization;
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return res.status(401).json({ message: 'Unauthorized: missing user id' });
+  }
+  const token = authHeader.split(' ')[1];
   try {
-    const pubKey = await fetchPublicKey();
-    if (!pubKey) throw new Error('Public key not available');
-
-    const decoded = jwt.verify(token, pubKey, { algorithms: ['RS256'] });
-
-    if (typeof decoded === 'string') {
+    const pubKey = await getPublicKey();
+    const decoded = jwt.verify(token, pubKey, { algorithms: ['RS256'] }) as JwtPayload & { id?: string; role?: string };
+    if (!decoded?.id) {
       return res.status(403).json({ message: 'Invalid token payload format' });
     }
-
-    req.user = decoded as JwtPayload & { id?: string; role?: string };
-    console.log('✅ User authenticated successfully in Product Service');
-    next();
+    (req as any).user = { id: decoded.id as string, role: decoded.role as string | undefined };
+    return next();
   } catch (err) {
-    console.error('❌ Authentication error:', err);
     return res.status(403).json({ message: 'Invalid or expired token' });
   }
 };
@@ -55,7 +47,11 @@ export const authenticate = async (req: Request, res: Response, next: NextFuncti
  * Middleware: Authorize ADMIN role
  */
 export const authorizeAdmin = (req: Request, res: Response, next: NextFunction) => {
-  if (!req.user?.role || req.user.role !== 'ADMIN') {
+  const roleFromUser = (req as any).user?.role as string | undefined;
+  const roleFromHeader = req.headers['x-user-role'] as string | undefined;
+  const role = roleFromUser || roleFromHeader;
+
+  if (role !== 'ADMIN') {
     return res.status(403).json({ message: 'Admin access required' });
   }
   next();
