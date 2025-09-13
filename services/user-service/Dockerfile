@@ -63,5 +63,6 @@ CMD ["node", "dist/index.js"]
 ############################################
 FROM deps AS dev
 WORKDIR /app/services/user-service
+COPY tsconfig.json /app/tsconfig.json
 COPY services/user-service ./
 CMD ["pnpm", "dev"]

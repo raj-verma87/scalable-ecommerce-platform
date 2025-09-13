@@ -64,6 +64,7 @@ CMD ["node", "dist/index.js"]
 FROM base AS dev
 WORKDIR /app/services/auth-service
 
+COPY tsconfig.json /app/tsconfig.json
 COPY services/auth-service/package.json pnpm-lock.yaml* ./
 RUN pnpm install --no-frozen-lockfile
 

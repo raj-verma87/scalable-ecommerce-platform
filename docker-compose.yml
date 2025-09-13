@@ -87,6 +87,8 @@ services:
       - AUTH_SERVICE_URL=http://auth-service:5001
     depends_on:
       - mongo
+    networks:
+      - backend
 
   order-service:
     build:
@@ -113,6 +115,40 @@ services:
       - AUTH_SERVICE_URL=http://auth-service:5001
     depends_on:
       - mongo
+  
+  cart-service:
+    build:
+      context: .
+      dockerfile: services/cart-service/Dockerfile
+      target: dev
+    container_name: cart-service-dev
+    ports:
+      - "5005:5005"
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:5005/health"]
+      interval: 15s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+    volumes:
+      - ./services/cart-service:/app/services/cart-service
+      - ./shared:/app/shared
+      - /app/node_modules
+      - ./services/auth-service/keys:/app/keys
+    environment:
+      - NODE_ENV=development
+      - PORT=5005
+      - MONGO_URI=mongodb://mongo:27017/cartdb
+      - AUTH_SERVICE_URL=http://auth-service:5001
+      - PRODUCT_SERVICE_URL=http://product-service:5003
+      - JWT_PUBLIC_KEY_PATH=/app/keys/public.key
+      - PRODUCT_SERVICE_URL=http://product-service:5003
+    depends_on:
+      - mongo
+      - product-service
+      - auth-service
+    networks:
+      - backend
 
   gateway-service:
     build:
@@ -132,14 +168,18 @@ services:
       - USER_SERVICE_URL=http://user-service:5002
       - PRODUCT_SERVICE_URL=http://product-service:5003
       - ORDER_SERVICE_URL=http://order-service:5004
+      - CART_SERVICE_URL=http://cart-service:5005
       - AUTH_HEALTH_URL=http://auth-service:5001/health
       - USERS_HEALTH_URL=http://user-service:5002/health
       - PRODUCT_HEALTH_URL=http://product-service:5003/health
       - ORDER_HEALTH_URL=http://order-service:5004/health
+      - CART_HEALTH_URL=http://cart-service:5005/health
     depends_on:
       - auth-service
       - user-service
       - product-service
+      - order-service
+      - cart-service
 
   rabbitmq:
     image: rabbitmq:3-management
@@ -158,3 +198,7 @@ services:
 
 volumes:
   mongo-data:
+  
+networks:
+  backend:
+    driver: bridge

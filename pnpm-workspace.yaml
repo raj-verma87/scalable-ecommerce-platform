@@ -1,6 +1,7 @@
 packages:
   - services/*
   - packages/*
+  - shared
 
 onlyBuiltDependencies:
   - bcrypt

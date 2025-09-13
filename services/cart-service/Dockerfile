@@ -23,7 +23,7 @@ RUN --mount=type=cache,id=pnpm-store,target=/root/.pnpm-store \
 # Stage 2: builder
 ############################################
 FROM base AS builder
-ARG SERVICE_DIR=services/order-service
+ARG SERVICE_DIR=services/cart-service
 COPY --from=deps /app/node_modules ./node_modules
 COPY --from=deps /app/package.json ./package.json
 COPY --from=deps /app/pnpm-lock.yaml ./pnpm-lock.yaml
@@ -45,7 +45,7 @@ RUN --mount=type=cache,id=pnpm-store,target=/root/.pnpm-store \
 FROM node:20-alpine  AS runner
 WORKDIR /app
 ENV NODE_ENV=production
-ARG SERVICE_DIR=services/order-service
+ARG SERVICE_DIR=services/cart-service
 ARG SERVICE_PORT=5002
 RUN apk upgrade --no-cache
 
@@ -62,7 +62,7 @@ CMD ["node", "dist/index.js"]
 # Stage 4: dev (simple ts-node-dev)
 ############################################
 FROM deps AS dev
-WORKDIR /app/services/order-service
+WORKDIR /app/services/cart-service
 COPY tsconfig.json /app/tsconfig.json
-COPY services/order-service ./
+COPY services/cart-service ./
 CMD ["pnpm", "dev"]

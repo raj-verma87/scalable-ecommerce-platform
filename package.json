@@ -9,11 +9,16 @@
     "packages/*"
   ],
   "scripts": {
-    "dev:docker": "docker-compose up --build",
-    "prod:docker": "docker-compose -f docker-compose.prod.yml up --build"
+    "build": "pnpm tsc -b",
+    "dev:docker": "pnpm exec docker-compose up --build",
+    "prod:docker": "pnpm exec docker-compose -f docker-compose.prod.yml up --build",
+    "clean": "pnpm rimraf ./services/*/dist ./shared/dist"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "packageManager": "pnpm@10.15.0"
+  "packageManager": "pnpm@10.15.0",
+  "devDependencies": {
+    "rimraf": "^6.0.1"
+  }
 }

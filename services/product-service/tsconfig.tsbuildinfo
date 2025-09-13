@@ -1,0 +1,1 @@
+{"root":["./src/index.ts","./src/config/db.ts","./src/controllers/product.controller.ts","./src/middlewares/auth.middleware.ts","./src/models/product.model.ts","./src/routes/product.routes.ts","./src/services/product.service.ts","./src/utils/jwt.ts"],"version":"5.9.2"}
