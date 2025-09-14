@@ -12,7 +12,13 @@
     "build": "pnpm tsc -b",
     "dev:docker": "pnpm exec docker-compose up --build",
     "prod:docker": "pnpm exec docker-compose -f docker-compose.prod.yml up --build",
-    "clean": "pnpm rimraf ./services/*/dist ./shared/dist"
+    "clean": "pnpm rimraf ./services/*/dist ./shared/dist",
+    "dev:order": "pnpm --filter order-service run dev",
+    "dev:cart": "pnpm --filter cart-service run dev",
+    "dev:auth": "pnpm --filter auth-service run dev",
+    "dev:user": "pnpm --filter user-service run dev",
+    "dev:product": "pnpm --filter product-service run dev",
+    "dev:gateway": "pnpm --filter gateway-service run dev"
   },
   "keywords": [],
   "author": "",

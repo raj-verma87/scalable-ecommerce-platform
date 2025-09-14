@@ -3,7 +3,7 @@ import * as userService from '../services/user.service';
 import User from '../models/user.model';
 import axios from 'axios';
 
-const AUTH_SERVICE_URL = process.env.AUTH_SERVICE_URL || 'http://localhost:5001';
+const AUTH_SERVICE_URL = process.env.AUTH_SERVICE_URL || 'http://auth-service:5001';
 
 export const createProfile = async (req: Request, res: Response) => {
   try {

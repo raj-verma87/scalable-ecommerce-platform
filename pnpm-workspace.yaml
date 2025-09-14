@@ -3,7 +3,8 @@ packages:
   - packages/*
   - shared
 
-onlyBuiltDependencies:
-  - bcrypt
-  - ejs
-  - es5-ext
+pnpm:
+  hoistPattern:
+    - '*'           # Hoist all dependencies
+  hoist:
+    self: true      # Allow self-hoisting for workspace packages

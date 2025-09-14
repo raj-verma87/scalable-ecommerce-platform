@@ -19,6 +19,8 @@ services:
       - ./services/auth-service:/app/services/auth-service
       - /app/services/auth-service/node_modules
       - ./services/auth-service/keys:/app/keys
+      - ./shared:/app/shared
+      - ./tsconfig.json:/app/tsconfig.json
     working_dir: /app/services/auth-service
     environment:
       - NODE_ENV=development
@@ -33,6 +35,9 @@ services:
     depends_on:
       - mongo
       - rabbitmq
+    networks:
+      - backend
+      
 
   user-service:
     build:
@@ -52,6 +57,7 @@ services:
       - ./services/user-service:/app/services/user-service
       - ./shared:/app/shared
       - /app/node_modules
+      - ./tsconfig.json:/app/tsconfig.json
     environment:
       - NODE_ENV=development
       - PORT=5002
@@ -61,6 +67,9 @@ services:
     depends_on:
       - mongo
       - rabbitmq
+    networks:
+      - backend
+      
 
   product-service:
     build:
@@ -79,7 +88,8 @@ services:
     volumes:
       - ./services/product-service:/app/services/product-service
       - ./shared:/app/shared
-      - /app/node_modules
+      - /app/services/product-service/node_modules
+      - ./tsconfig.json:/app/tsconfig.json
     environment:
       - NODE_ENV=development
       - PORT=5003
@@ -87,6 +97,7 @@ services:
       - AUTH_SERVICE_URL=http://auth-service:5001
     depends_on:
       - mongo
+        
     networks:
       - backend
 
@@ -108,6 +119,7 @@ services:
       - ./services/order-service:/app/services/order-service
       - ./shared:/app/shared
       - /app/node_modules
+      - ./tsconfig.json:/app/tsconfig.json
     environment:
       - NODE_ENV=development
       - PORT=5004
@@ -115,6 +127,8 @@ services:
       - AUTH_SERVICE_URL=http://auth-service:5001
     depends_on:
       - mongo
+    networks:
+      - backend
   
   cart-service:
     build:
@@ -135,6 +149,7 @@ services:
       - ./shared:/app/shared
       - /app/node_modules
       - ./services/auth-service/keys:/app/keys
+      - ./tsconfig.json:/app/tsconfig.json
     environment:
       - NODE_ENV=development
       - PORT=5005
@@ -160,7 +175,8 @@ services:
     volumes:
       - ./services/gateway-service:/app/services/gateway-service
       - ./services/gateway-service/keys/public.key:/app/public.key
-      - /app/node_modules
+      - ./shared:/app/shared
+      - ./tsconfig.json:/app/tsconfig.json
     environment:
       - NODE_ENV=development
       - SERVICE_PORT=8080
@@ -180,6 +196,8 @@ services:
       - product-service
       - order-service
       - cart-service
+    networks:
+      - backend
 
   rabbitmq:
     image: rabbitmq:3-management
@@ -187,14 +205,24 @@ services:
     ports:
       - "5672:5672"   # RabbitMQ
       - "15672:15672" # Management UI
+    networks:
+      - backend
 
   mongo:
     image: mongo:6
     container_name: mongo-dev
     ports:
       - "27018:27017"
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
     volumes:
       - mongo-data:/data/db
+    networks:
+      - backend
 
 volumes:
   mongo-data:

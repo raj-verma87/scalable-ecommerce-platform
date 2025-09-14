@@ -30,13 +30,13 @@ apiEndpoints:
   product:
     host: localhost
     paths:
-      - /products/*
-      - /products
+      - /products*
   orders:
     host: localhost
     paths:
-      - /orders/*
       - /orders
+      - /orders/
+      - /orders/*
   cart:
     host: localhost
     paths:
@@ -69,13 +69,13 @@ serviceEndpoints:
   auth-service:
     url: ${AUTH_SERVICE_URL}/api
   user-service:
-    url: ${USER_SERVICE_URL}
+    url: ${USER_SERVICE_URL}/api
   product-service:
-    url: ${PRODUCT_SERVICE_URL}/products
+    url: ${PRODUCT_SERVICE_URL}/api
   order-service:
-    url: ${ORDER_SERVICE_URL}
+    url: ${ORDER_SERVICE_URL}/api
   cart-service:
-    url: ${CART_SERVICE_URL}
+    url: ${CART_SERVICE_URL}/api
 
   # ✅ Health Service Endpoints
   auth-health:
@@ -90,7 +90,7 @@ serviceEndpoints:
     url: ${CART_HEALTH_URL}
 
 policies:
-  - jwt-auth   # 👈 your custom policy
+  - jwt-auth
   - basic-auth
   - cors
   - expression
@@ -105,6 +105,9 @@ pipelines:
     apiEndpoints:
       - auth-public
     policies:
+      - log:
+          - action:
+               message: "Incoming order request: ${req.method} ${req.protocol}://${req.headers.host}${req.originalUrl}"
       - proxy:
           - action:
               serviceEndpoint: auth-service
@@ -121,6 +124,9 @@ pipelines:
     apiEndpoints:
       - auth-protected
     policies:
+      - log:
+          - action:
+               message: "Incoming order request: ${req.method} ${req.protocol}://${req.headers.host}${req.originalUrl}"
       - jwt-auth: {}
       - proxy:
           - action:
@@ -140,7 +146,7 @@ pipelines:
     policies:
       - log:
           - action:
-              message: "Incoming user request:"
+               message: "Incoming order request: ${req.method} ${req.protocol}://${req.headers.host}${req.originalUrl}"
       - jwt-auth: {}
       - proxy:
           - action:
@@ -155,12 +161,15 @@ pipelines:
     apiEndpoints:
       - product
     policies:
+      - log:
+          - action:
+               message: "Incoming order request: ${req.method} ${req.protocol}://${req.headers.host}${req.originalUrl}"
       - jwt-auth: {}
       - proxy:
           - action:
               serviceEndpoint: product-service
               changeOrigin: true
-              stripPath: true
+              stripPath: false
       - cors:
           - action:
               origin: "*"
@@ -174,7 +183,7 @@ pipelines:
     policies:
       - log:
           - action:
-              message: "Incoming order request: ${req.method} ${req.originalUrl}"
+              message: "Incoming order request: ${req.method} ${req.protocol}://${req.headers.host}${req.originalUrl}"
       - jwt-auth: {}
       - rate-limit:
           - action:
@@ -198,7 +207,7 @@ pipelines:
     policies:
       - log:
           - action:
-              message: "Incoming cart request: ${req.method} ${req.originalUrl}"
+             message: "Incoming order request: ${req.method} ${req.protocol}://${req.headers.host}${req.originalUrl}"
       - jwt-auth: {}
       - rate-limit:
           - action:

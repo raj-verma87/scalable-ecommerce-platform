@@ -8,7 +8,7 @@ import jwt, { JwtPayload } from 'jsonwebtoken';
 let cachedPublicKey: string | null = null;
 const getPublicKey = async (): Promise<string> => {
   if (cachedPublicKey) return cachedPublicKey;
-  const AUTH_SERVICE_URL = process.env.AUTH_SERVICE_URL || 'http://localhost:5001';
+  const AUTH_SERVICE_URL = process.env.AUTH_SERVICE_URL || 'http://auth-service:5001';
   const { data } = await axios.get(`${AUTH_SERVICE_URL}/api/auth/public-key`, { responseType: 'text', timeout: 3000 });
   cachedPublicKey = (data as string).replace(/\\n/g, '\n');
   return cachedPublicKey;

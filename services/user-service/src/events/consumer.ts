@@ -5,7 +5,7 @@ const MAX_RETRIES = 5;
 const RETRY_DELAY_MS = 3000;
 
 export const connectRabbitMQ = async () => {
-  const amqpUrl = process.env.RABBITMQ_URL || 'amqp://localhost:5672';
+  const amqpUrl = process.env.RABBITMQ_URL || 'amqp://rabbitmq:5672';
 
   let retries = MAX_RETRIES;
 

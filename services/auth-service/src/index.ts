@@ -3,7 +3,7 @@ import dotenv from "dotenv";
 import connectDB from "./config/db";
 import authRoutes from './routes/auth.route';
 import errorHandler from "./middlewares/errorHandler";
-import { connectRabbitMQ } from './events/publisher';
+ import { connectRabbitMQ } from './events/publisher';
 import jwksRouter from "./routes/jwks";
 
 dotenv.config();
