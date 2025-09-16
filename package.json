@@ -18,7 +18,8 @@
     "dev:auth": "pnpm --filter auth-service run dev",
     "dev:user": "pnpm --filter user-service run dev",
     "dev:product": "pnpm --filter product-service run dev",
-    "dev:gateway": "pnpm --filter gateway-service run dev"
+    "dev:gateway": "pnpm --filter gateway-service run dev",
+    "dev:payment": "pnpm --filter payment-service run dev"
   },
   "keywords": [],
   "author": "",

@@ -7,18 +7,21 @@ import { StatusCodes } from '../constants/statusCodes';
 import { Messages } from '../constants/messages';
 import mongoose from 'mongoose';
 import axios from 'axios';
+import { isRunningInDocker } from '../utils/env';
 
 dotenv.config();
 
+const isDocker: boolean = isRunningInDocker();
 // Environment variables for internal user-service URLs
-const USER_SERVICE_URL = process.env.USER_SERVICE_URL || 'http://user-service:5002/api/users';
+const USER_SERVICE_URL = isDocker ?  'http://user-service:5002/api/users' : process.env.USER_SERVICE_URL!;
 
-const USER_SERVICE_HEALTH_URL = process.env.USER_SERVICE_HEALTH_URL || 'http://user-service:5002/health';
+const USER_SERVICE_HEALTH_URL = isDocker ? 'http://user-service:5002/health' : process.env.USER_SERVICE_HEALTH_URL!;
 
 
 export const registerUser = async (email: string, password: string)=> {
     // Fast-fail if user-service appears down
     try {
+      console.log("USER_SERVICE_HEALTH_URL",USER_SERVICE_HEALTH_URL," >",isDocker);
       await axios.get(USER_SERVICE_HEALTH_URL, { timeout: 2000 });
     } catch (err: any) {
       throw { statusCode: 503, message: 'User Service unavailable. Please try again later.' };

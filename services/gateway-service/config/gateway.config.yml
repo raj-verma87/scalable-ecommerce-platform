@@ -42,6 +42,11 @@ apiEndpoints:
     paths:
       - /cart/*
       - /cart
+  payments:
+    host: localhost
+    paths:
+      - /payments
+      - /payments/*
 
   # ✅ Health Endpoints
   health-auth:
@@ -64,6 +69,10 @@ apiEndpoints:
     host: localhost
     paths:
       - /health/cart
+  health-payments:
+    host: localhost
+    paths:
+      - /health/payments
 
 serviceEndpoints:
   auth-service:
@@ -76,6 +85,8 @@ serviceEndpoints:
     url: ${ORDER_SERVICE_URL}/api
   cart-service:
     url: ${CART_SERVICE_URL}/api
+  payment-service:
+    url: ${PAYMENT_SERVICE_URL}/api
 
   # ✅ Health Service Endpoints
   auth-health:
@@ -88,6 +99,8 @@ serviceEndpoints:
     url: ${ORDERS_HEALTH_URL}
   cart-health:
     url: ${CART_HEALTH_URL}
+  payments-health:
+    url: ${PAYMENTS_HEALTH_URL}
 
 policies:
   - jwt-auth
@@ -224,6 +237,27 @@ pipelines:
       - log:
           - action:
               message: 'Cart request processed'
+  
+  payment-pipeline:
+    apiEndpoints:
+      - payments
+    policies:
+      - log:
+          - action:
+              message: "Incoming payment request: ${req.method} ${req.originalUrl}"
+      - jwt-auth: {}
+      - rate-limit:
+          - action:
+              max: 80
+              windowMs: 60000
+      - proxy:
+          - action:
+              serviceEndpoint: payment-service
+              changeOrigin: true
+              stripPath: false
+      - cors:
+          - action:
+              origin: "*"
 
 
   # ✅ Health Pipelines
@@ -274,5 +308,15 @@ pipelines:
       - proxy:
           - action:
               serviceEndpoint: cart-health
+              changeOrigin: true
+              stripPath: true
+  
+  health-payments-pipeline:
+    apiEndpoints:
+      - health-payments
+    policies:
+      - proxy:
+          - action:
+              serviceEndpoint: payments-health
               changeOrigin: true
               stripPath: true

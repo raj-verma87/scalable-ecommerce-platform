@@ -1,8 +1,10 @@
 import { Router } from 'express';
 import * as orderController from '../controllers/order.controller';
-import { authenticate } from '../middlewares/order.middleware';
+//import { authenticate } from '../middlewares/order.middleware';
+import { gatewayOrLocalAuthenticate } from '../../../../shared/middlewares/auth.middleware';
 
 const router = Router();
+router.use(gatewayOrLocalAuthenticate);
 
 // Protected routes (JWT handled by Gateway)
 router.post('/', orderController.createOrder);

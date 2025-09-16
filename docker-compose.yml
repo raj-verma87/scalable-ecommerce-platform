@@ -118,13 +118,14 @@ services:
     volumes:
       - ./services/order-service:/app/services/order-service
       - ./shared:/app/shared
-      - /app/node_modules
+      - /app/services/order-service/node_modules
       - ./tsconfig.json:/app/tsconfig.json
     environment:
       - NODE_ENV=development
       - PORT=5004
       - MONGO_URI=mongodb://mongo:27017/orderdb
       - AUTH_SERVICE_URL=http://auth-service:5001
+      - PAYMENT_SERVICE_URL=http://payment-service:5006
     depends_on:
       - mongo
     networks:
@@ -165,6 +166,40 @@ services:
     networks:
       - backend
 
+  payment-service:
+    build:
+      context: .
+      dockerfile: services/payment-service/Dockerfile
+      target: dev
+    env_file:
+      - ./services/payment-service/.env.docker
+    container_name: payment-service-dev
+    ports:
+      - "5006:5006"
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:5006/health"]
+      interval: 15s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+    volumes:
+      - ./services/payment-service:/app/services/payment-service
+      - ./shared:/app/shared
+      - /app/node_modules
+      - ./tsconfig.json:/app/tsconfig.json
+    environment:
+      - NODE_ENV=development
+      - PORT=5006
+      - MONGO_URI=mongodb://mongo:27017/paymentdb
+      - ORDER_SERVICE_URL=http://order-service:5004
+      - RABBITMQ_URL=amqp://rabbitmq:5672
+    depends_on:
+      - mongo
+      - rabbitmq
+      - order-service
+    networks:
+      - backend
+
   gateway-service:
     build:
       context: .
@@ -185,11 +220,14 @@ services:
       - PRODUCT_SERVICE_URL=http://product-service:5003
       - ORDER_SERVICE_URL=http://order-service:5004
       - CART_SERVICE_URL=http://cart-service:5005
+      - PAYMENT_SERVICE_URL=http://payment-service:5006
       - AUTH_HEALTH_URL=http://auth-service:5001/health
       - USERS_HEALTH_URL=http://user-service:5002/health
       - PRODUCT_HEALTH_URL=http://product-service:5003/health
       - ORDER_HEALTH_URL=http://order-service:5004/health
       - CART_HEALTH_URL=http://cart-service:5005/health
+      - PAYMENTS_HEALTH_URL=http://payment-service:5006/health
+
     depends_on:
       - auth-service
       - user-service
