@@ -1,88 +1,105 @@
 // src/services/payment.service.ts
-import axios from 'axios';
-import { v4 as uuidv4 } from 'uuid';
-import { publishEvent } from '../events/publisher';
-import { log, error } from '../utils/logger';
+import axios from "axios";
+import { v4 as uuidv4 } from "uuid";
+import { publishEvent } from "../events/publisher";
+import { log, error } from "../utils/logger";
+import { generateServiceToken } from "../utils/auth";
+import {
+  createPayment,
+  updatePaymentStatus,
+} from "../repositories/payment.repository";
 
 type PaymentResult = {
   success: boolean;
-  providerId?: string;
+  providerTransactionId?: string;
   message?: string;
 };
 
-/**
- * Simulate calling a payment provider.
- * In production replace with Stripe SDK call.
- */
-export const processPayment = async (orderId: string, amount: number, paymentMethod: any): Promise<PaymentResult> => {
-  log('Processing payment for order', orderId, 'amount', amount);
-  // Simulate network latency + decision
+export const processPayment = async (
+  orderId: string,
+  amount: number,
+  paymentMethod: any
+): Promise<PaymentResult> => {
+  log("Processing payment for order", orderId, "amount", amount);
   await new Promise((r) => setTimeout(r, 600));
-
-  // Simple random success/failure deterministic-ish: succeed 90% of time
   const ok = Math.random() < 0.9;
-  if (!ok) {
-    return { success: false, message: 'Payment declined by provider' };
-  }
-
-  // simulate provider transaction id
-  return { success: true, providerId: 'pay_' + uuidv4() };
+  if (!ok) return { success: false, message: "Payment declined by provider" };
+  return { success: true, providerTransactionId: "pay_" + uuidv4() };
 };
 
-/**
- * Handle payment flow:
- * 1. process payment via provider (mock)
- * 2. on success -> update order status via Order Service and publish OrderPaid event
- * 3. on failure -> publish PaymentFailed event
- */
-export const handlePayment = async (orderId: string, amount: number, paymentMethod: any) => {
+export const handlePayment = async (
+  userId: string,
+  orderId: string,
+  amount: number,
+  paymentMethod: any
+) => {
+  const payment = await createPayment({
+    userId,
+    orderId,
+    amount,
+    status: "PENDING",
+    provider: paymentMethod?.provider || "mock",
+    providerTransactionId: null,
+  });
+
   try {
     const result = await processPayment(orderId, amount, paymentMethod);
 
     if (!result.success) {
-      // publish failure event
-      await publishEvent('payment.failed', {
-        event: 'PaymentFailed',
-        data: { orderId, amount, reason: result.message }
+      await updatePaymentStatus(payment._id.toString(), "FAILED", undefined, result.message);
+
+      await publishEvent("payment.failed", {
+        event: "PaymentFailed",
+        data: { orderId, amount, reason: result.message },
       });
+
       return { success: false, reason: result.message };
     }
- console.log("Order service token:", process.env.ORDER_SERVICE_AUTH_TOKEN?.slice(0, 10) + "...");
 
- try{
-    // on success, call order service to mark PAID (server-to-server)
-    const response =  await axios.patch(`${process.env.ORDER_SERVICE_URL}/api/orders/${orderId}/status`, {
-      status: 'PAID'
-    }, {
-        headers: {
-            Authorization: `Bearer ${process.env.ORDER_SERVICE_AUTH_TOKEN}`, 
-        },
-      timeout: 5000
+    await updatePaymentStatus(payment._id.toString(), "SUCCESS", result.providerTransactionId);
+
+    const token = generateServiceToken(userId, orderId);
+    try {
+      const response = await axios.patch(
+        `${process.env.ORDER_SERVICE_URL}/api/orders/${orderId}/status`,
+        { status: "PAID" },
+        { headers: { Authorization: `Bearer ${token}` }, timeout: 5000 }
+      );
+      log("Order status updated:", response.data);
+    } catch (err: any) {
+      error("PATCH failed", err.response?.status, err.response?.data);
+    }
+
+    await publishEvent("payment.processed", {
+      event: "PaymentProcessed",
+      data: {
+        orderId,
+        amount,
+        providerTransactionId: result.providerTransactionId,
+        paymentId: payment._id,
+      },
     });
-    console.log("Order details:", response.data);
-  }
-  catch (err:any) {
-    console.error("PATCH failed", err.response?.status, err.response?.data);
-  } 
-    await publishEvent('payment.processed', {
-      event: 'PaymentProcessed',
-      data: { orderId, amount, providerId: result.providerId }
+
+    await publishEvent("order.paid", {
+      event: "OrderPaid",
+      data: {
+        orderId,
+        amount,
+        providerTransactionId: result.providerTransactionId,
+        paymentId: payment._id,
+      },
     });
-   
-    // For compatibility with other services (OrderPaid event name)
-    await publishEvent('order.paid', {
-      event: 'OrderPaid',
-      data: { orderId, amount, providerId: result.providerId }
-    });
- 
-    return { success: true, providerId: result.providerId };
+
+    return { success: true, providerTransactionId: result.providerTransactionId };
   } catch (err: any) {
-    error('Error processing payment', err?.message || err);
-    // publish failure
-    await publishEvent('payment.failed', {
-      event: 'PaymentFailed',
-      data: { orderId, amount, reason: err?.message || 'unknown' }
+    error("Error processing payment", err?.message || err);
+    await updatePaymentStatus(payment._id.toString(), "FAILED", undefined, err?.message || "Unknown error");
+
+    await publishEvent("payment.failed", {
+      event: "PaymentFailed",
+      data: { orderId, amount, reason: err?.message || "unknown" },
     });
-    return { success: false, reason: err?.message || 'error' };
+
+    return { success: false, reason: err?.message || "error" };
   }
 };

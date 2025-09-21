@@ -47,15 +47,31 @@ export const updateStatus = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     const { status } = req.body;
-    const user = (req.user as JwtPayload) || ({} as JwtPayload);
-    const role = (user as any)?.role || (req.headers['x-user-role'] as string);
 
-    if (role !== 'ADMIN') {
-      return res.status(403).json({ message: 'Forbidden' });
+    const user = (req as any).user as JwtPayload | undefined;
+    const service = (req as any).service as {
+      userId?: string;
+      role?: string;
+      name?: string;
+    } | undefined;
+
+    const role = user?.role || service?.role || (req.headers['x-user-role'] as string);
+    const userId = user?.id || service?.userId;
+
+    const isAdmin = role === 'ADMIN';
+    const isInternalService = role === 'internal' && !!service?.userId;
+
+    if (!isAdmin && !isInternalService) {
+      return res.status(403).json({ message: 'Forbidden: Unauthorized actor' });
     }
 
+    // Optional: Audit log
+    console.log(`[Order] Status update requested by ${isAdmin ? `ADMIN ${userId}` : `${service?.name} for user ${userId}`}`);
+
     const updatedOrder = await orderService.updateOrderStatus(id, status);
-    if (!updatedOrder) return res.status(404).json({ message: 'Order not found' });
+    if (!updatedOrder) {
+      return res.status(404).json({ message: 'Order not found' });
+    }
 
     res.json(updatedOrder);
   } catch (err) {

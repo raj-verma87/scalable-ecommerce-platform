@@ -1,9 +1,12 @@
 // src/routes/payment.routes.ts
 import { Router } from 'express';
-import { createPayment } from '../controllers/payment.controller';
+import { createPayment, getPaymentHistory } from '../controllers/payment.controller';
+import { gatewayOrLocalAuthenticate } from '../../../../shared/middlewares/auth.middleware';
 
 const router = Router();
+router.use(gatewayOrLocalAuthenticate);
 
-router.post('/', createPayment);
+router.post("/", createPayment);
+router.get("/history", getPaymentHistory);
 
 export default router;
