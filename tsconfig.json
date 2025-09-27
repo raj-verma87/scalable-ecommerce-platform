@@ -6,7 +6,9 @@
     { "path": "./services/user-service" },
     { "path": "./services/product-service" },
     { "path": "./services/order-service" },
-    { "path": "./services/cart-service" }
+    { "path": "./services/cart-service" },
+    { "path": "./services/payment-service" },
+    { "path": "./services/gateway-service" }
     // ✅ Add other services as needed
   ],
   "compilerOptions": {
@@ -21,7 +23,7 @@
     "forceConsistentCasingInFileNames": true,
     "baseUrl": ".",
     "paths": {
-      "@shared/*": ["shared/*"]
+      "@shared/*": ["shared/src/*"]
     }
   }
 }

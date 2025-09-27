@@ -7,7 +7,8 @@
     "outDir": "dist",
     "esModuleInterop": true,
     "strict": true,
-    "typeRoots": ["./types", "./node_modules/@types"]
+    "typeRoots": ["./types", "./node_modules/@types"],
+    "composite": true,
   },
     "include": [
     "src/**/*.ts"                         
@@ -15,6 +16,9 @@
   "exclude": [
     "node_modules",                       
     "dist"                                 
+  ],
+  "references": [
+    { "path": "../../shared" }
   ]
 }
 

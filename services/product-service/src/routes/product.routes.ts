@@ -8,7 +8,7 @@ import {
 } from '../controllers/product.controller';
 import { gatewayOrLocalAuthenticate, authorizeAdmin } from '../middlewares/auth.middleware';
 
-const router = Router();
+const router: Router = Router();
 
 router.get('/', getProducts);
 router.get('/:id', getProduct);

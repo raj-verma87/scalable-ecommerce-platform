@@ -1,17 +1,17 @@
 import mongoose, { Document, Schema } from "mongoose";
 
 export interface IUser extends Document {
-  authUserId: string; // Reference to _id from Auth Service
+  authUserId: string;
   name?: string;
   address?: string;
   phone?: string;
-  role: "USER" | "ADMIN"; // store role locally
+  role: "USER" | "ADMIN";
 }
 
 const userSchema = new Schema<IUser>(
   {
     authUserId: {
-      type: String, // stored as string for cross-service compatibility
+      type: String,
       required: true,
       index: true,
     },

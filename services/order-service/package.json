@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "dev": "nodemon --watch src --ext ts --exec ts-node ./src/index.ts",
+    "dev": "nodemon --watch src --ext ts --exec \"ts-node -r tsconfig-paths/register ./src/index.ts\"",
     "build": "tsc",
     "start": "node dist/index.js"
   },
@@ -17,13 +17,14 @@
     "@types/jsonwebtoken": "^9.0.10",
     "nodemon": "^3.1.10",
     "ts-node": "^10.9.2",
+    "tsconfig-paths": "^4.2.0",
     "typescript": "^5.9.2"
   },
   "dependencies": {
-    "jsonwebtoken": "^9.0.2",
     "axios": "^1.11.0",
     "dotenv": "^17.2.1",
     "express": "^5.1.0",
+    "jsonwebtoken": "^9.0.2",
     "mongoose": "^8.18.0"
   }
 }

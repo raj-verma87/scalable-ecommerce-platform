@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import * as cartController from '../controllers/cart.controller';
-import { gatewayOrLocalAuthenticate } from '../../../../shared/middlewares/auth.middleware';
+import { gatewayOrLocalAuthenticate } from '@shared/middleware/auth.middleware';
 
 const router = Router();
 

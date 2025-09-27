@@ -2,7 +2,7 @@ import express from "express";
 import dotenv from "dotenv";
 import connectDB from "./config/db";
 import authRoutes from './routes/auth.route';
-import errorHandler from "./middlewares/errorHandler";
+import { errorHandler, requestContext } from '@shared/middleware';
  import { connectRabbitMQ } from './events/publisher';
 import jwksRouter from "./routes/jwks";
 
@@ -12,6 +12,9 @@ const app = express();
 const PORT = process.env.PORT || 5001;
 
 app.use(express.json());
+
+// Add request context middleware
+app.use(requestContext);
 
 // Routes
 app.use('/api/auth', authRoutes);
@@ -23,7 +26,7 @@ app.get('/health', (req, res) => {
   res.status(200).json({ status: 'ok', service: 'auth-service' });
 });
 // Error handler
-app.use(errorHandler);
+app.use(errorHandler('auth-service'));
 
 // Connect DB & Start server
 connectDB().then(() => {

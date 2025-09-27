@@ -7,13 +7,23 @@ import { connectAmqp } from "./config/amqp";
 import paymentRoutes from "./routes/payment.routes";
 import { log, error } from "./utils/logger";
 import connectDB from './config/db';
+import { requestContext, errorHandler } from '@shared/middleware';
 
 dotenv.config();
 
 const app = express();
 app.use(express.json());
+app.use(requestContext);
 
 app.use("/api/payments", paymentRoutes);
+
+// Health check
+app.get('/health', (req, res) => {
+  res.status(200).json({ status: 'ok', service: 'payment-service' });
+});
+
+// Error handler
+app.use(errorHandler('payment-service'));
 
 const PORT = process.env.PORT || 5006;
 
