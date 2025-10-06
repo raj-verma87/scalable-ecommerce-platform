@@ -1,4 +1,4 @@
-import redis from '../config/redis';
+import getRedis from '../config/redis';
 
 export interface IdempotencyRecord {
   key: string;
@@ -17,11 +17,11 @@ export const createIdempotencyStore = (prefix: string, ttl: number = 600) => {
       response,
       createdAt: Date.now(),
     };
-    await redis.set(`${IDEMPOTENCY_PREFIX}${key}`, JSON.stringify(record), 'EX', ttl);
+    await getRedis().set(`${IDEMPOTENCY_PREFIX}${key}`, JSON.stringify(record), 'EX', ttl);
   };
 
   const getIdempotencyRecord = async (key: string): Promise<IdempotencyRecord | null> => {
-    const data = await redis.get(`${IDEMPOTENCY_PREFIX}${key}`);
+    const data = await getRedis().get(`${IDEMPOTENCY_PREFIX}${key}`);
     return data ? JSON.parse(data) : null;
   };
 

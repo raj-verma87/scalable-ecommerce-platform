@@ -26,6 +26,7 @@ services:
       - NODE_ENV=development
       - PORT=5001
       - MONGO_URI=mongodb://mongo:27017/authdb
+      - REDIS_URL=redis://redis:6379
       - JWT_SECRET=supersecret
       - RABBITMQ_URL=amqp://rabbitmq:5672
       - JWT_PRIVATE_KEY_PATH=/app/keys/private.key
@@ -34,6 +35,7 @@ services:
 
     depends_on:
       - mongo
+      - redis
       - rabbitmq
     networks:
       - backend
@@ -62,10 +64,12 @@ services:
       - NODE_ENV=development
       - PORT=5002
       - MONGO_URI=mongodb://mongo:27017/userdb
+      - REDIS_URL=redis://redis:6379
       - RABBITMQ_URL=amqp://rabbitmq:5672
       - AUTH_SERVICE_URL=http://auth-service:5001
     depends_on:
       - mongo
+      - redis
       - rabbitmq
     networks:
       - backend
@@ -120,8 +124,6 @@ services:
       - ./shared:/app/shared
       - /app/services/order-service/node_modules
       - ./tsconfig.json:/app/tsconfig.json
-    env_file:
-      - ./services/order-service/.env.docker
     environment:
       - NODE_ENV=development
       - PORT=5004
@@ -129,6 +131,7 @@ services:
       - AUTH_SERVICE_URL=http://auth-service:5001
       - PAYMENT_SERVICE_URL=http://payment-service:5006
       - SERVICE_JWT_SECRET=${SERVICE_JWT_SECRET}
+      - REDIS_URL=redis://redis:6379
     depends_on:
       - mongo
     networks:
@@ -197,10 +200,12 @@ services:
       - ORDER_SERVICE_URL=http://order-service:5004
       - RABBITMQ_URL=amqp://rabbitmq:5672
       - SERVICE_JWT_SECRET=${SERVICE_JWT_SECRET}
+      - REDIS_URL=redis://redis:6379
     depends_on:
       - mongo
       - rabbitmq
       - order-service
+      - redis
     networks:
       - backend
 
@@ -247,6 +252,20 @@ services:
     ports:
       - "5672:5672"   # RabbitMQ
       - "15672:15672" # Management UI
+    networks:
+      - backend
+
+  redis:
+    image: redis:7-alpine
+    container_name: redis-dev
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
     networks:
       - backend
 

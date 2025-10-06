@@ -62,11 +62,24 @@ CMD ["node", "dist/index.js"]
 # Stage 4: dev (simple ts-node-dev)
 ############################################
 FROM base AS dev
-WORKDIR /app/services/auth-service
+WORKDIR /app
 
-COPY tsconfig.json /app/tsconfig.json
-COPY services/auth-service/package.json pnpm-lock.yaml* ./
+# Copy workspace files
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+COPY tsconfig.json ./
+
+# Copy shared package
+COPY shared/package.json ./shared/
+COPY shared/ ./shared/
+
+# Copy auth service package
+COPY services/auth-service/package.json ./services/auth-service/
+
+# Install all dependencies including shared package
 RUN pnpm install --no-frozen-lockfile
 
-COPY services/auth-service ./
+# Copy auth service source
+COPY services/auth-service ./services/auth-service/
+
+WORKDIR /app/services/auth-service
 CMD ["pnpm", "dev"]

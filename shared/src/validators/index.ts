@@ -3,16 +3,16 @@ import Joi from './customJoi';
 export const userSchemas = {
   create: Joi.object({
     authUserId: Joi.string().required(),
-    name: Joi.string().optional(),
-    address: Joi.string().optional(),
-    phone: Joi.string().optional(),
+    name: Joi.string().allow('').optional(),
+    address: Joi.string().allow('').optional(),
+    phone: Joi.string().allow('').optional(),
     role: Joi.string().valid('USER', 'ADMIN').default('USER'),
   }),
 
   updateProfile: Joi.object({
-    name: Joi.string().optional(),
-    address: Joi.string().optional(),
-    phone: Joi.string().optional(),
+    name: Joi.string().allow('').optional(),
+    address: Joi.string().allow('').optional(),
+    phone: Joi.string().allow('').optional(),
     role: Joi.string().valid('USER', 'ADMIN').optional(),
   }),
 };

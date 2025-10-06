@@ -1,6 +1,6 @@
 // services/shared/src/middleware/validateRequest.ts
 import { Request, Response, NextFunction } from 'express';
-import { Schema } from 'joi';
+import { ValidationErrorItem, Schema } from 'joi';
 import { ApiError } from './errorHandler';
 import { HTTP_STATUS } from '../constants/httpStatus';
 
@@ -19,7 +19,7 @@ export const validateRequest = (
       throw new ApiError(
         HTTP_STATUS.BAD_REQUEST,
         'Validation error',
-        error.details.map((d) => d.message)
+        error.details.map((d: ValidationErrorItem) => d.message)
       );
     }
 
