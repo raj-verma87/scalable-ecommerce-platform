@@ -4,6 +4,7 @@ import connectDB from './config/db';
 import userRoutes from './routes/user.routes';
 import { connectRabbitMQ } from './events/consumer';
 import { requestContext, errorHandler } from '@shared/middleware';
+import { morganMiddleware } from '../../../shared/src/middleware/morgan.middleware';
 
 dotenv.config();
 
@@ -13,6 +14,9 @@ const PORT = process.env.PORT || 5002;
 app.use(express.json());
 app.use(requestContext);
 app.use('/api/users',userRoutes);
+
+// Apply Morgan + Winston middleware
+app.use(morganMiddleware);
 
 app.get('/health', (req, res) => {
   res.status(200).json({ status: 'ok', service: 'user-service' });

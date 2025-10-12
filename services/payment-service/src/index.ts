@@ -8,6 +8,7 @@ import paymentRoutes from "./routes/payment.routes";
 import { log, error } from "./utils/logger";
 import connectDB from './config/db';
 import { requestContext, errorHandler } from '@shared/middleware';
+import { morganMiddleware } from '../../../shared/src/middleware/morgan.middleware';
 
 dotenv.config();
 
@@ -16,6 +17,9 @@ app.use(express.json());
 app.use(requestContext);
 
 app.use("/api/payments", paymentRoutes);
+
+// Apply Morgan + Winston middleware
+app.use(morganMiddleware);
 
 // Health check
 app.get('/health', (req, res) => {

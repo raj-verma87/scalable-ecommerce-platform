@@ -16,15 +16,17 @@ export const logger = createLogger({
   ),
   transports: [
     new transports.Console({
-      format: format.combine(
-        format.colorize(),
-        format.simple()
-      )
+      format: combine(colorize(), timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }), logFormat),
     }),
   ],
 });
 
-// Optional: allow logging unhandled promise rejections
+// Handle unhandled rejections
 process.on('unhandledRejection', (reason: any) => {
   logger.error(`Unhandled Rejection: ${reason}`);
+});
+
+// Handle uncaught exceptions
+process.on('uncaughtException', (error: Error) => {
+  logger.error(`Uncaught Exception: ${error.message}`);
 });

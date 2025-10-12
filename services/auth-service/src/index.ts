@@ -5,6 +5,7 @@ import authRoutes from './routes/auth.route';
 import { errorHandler, requestContext } from '@shared/middleware';
  import { connectRabbitMQ } from './events/publisher';
 import jwksRouter from "./routes/jwks";
+import { morganMiddleware } from '../../../shared/src/middleware/morgan.middleware';
 
 dotenv.config();
 

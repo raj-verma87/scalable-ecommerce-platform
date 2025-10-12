@@ -7,6 +7,7 @@ import { requestLogger } from '@shared/middleware/logger.middleware';
 import { HTTP_STATUS } from '@shared/constants/httpStatus';
 import {logger} from '@shared/utils/logger';
 import { requestContext } from '@shared/middleware/requestContext';
+import { morganMiddleware } from '../../../shared/src/middleware/morgan.middleware';
 
 dotenv.config();
 
@@ -17,6 +18,8 @@ app.use(express.json());
 app.use(requestContext);
 app.use(requestLogger('order-service'));
 
+// Apply Morgan + Winston middleware
+app.use(morganMiddleware);
 
 // Routes
 app.use('/api/orders', orderRoutes);

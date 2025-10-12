@@ -5,3 +5,6 @@ export { asyncHandler } from './asyncHandler';
 export { gatewayOrLocalAuthenticate, authorizeAdmin } from './auth.middleware';
 export { createIdempotencyMiddleware } from './idempotency.middleware';
 export { requestLogger } from './logger.middleware';
+export {morganMiddleware} from './morgan.middleware';
+
+
